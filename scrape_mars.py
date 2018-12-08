@@ -50,13 +50,17 @@ def scrape():
     html_JPL = browser.html
     soup_JPL = bs(html_JPL, "html.parser")
 
-    # Get the URL of the featured image
+    # Get the URL of the featured image and its caption
     image = soup_JPL.find_all("a", class_ = "button fancybox")[0]
     image_url = image.get("data-fancybox-href")
     featured_image_url = "https://www.jpl.nasa.gov" + image_url
 
+    image_caption = image.get("data-description")
+
+
     # Add to dictionary
     mars_current_data["featured_image"] = featured_image_url
+    mars_current_data["featured_caption"] = image_caption
 
 
     ## Mars Weather ##
@@ -89,12 +93,11 @@ def scrape():
     facts_df = mars_facts[0]
     facts_df.columns = ["Category", "Data"]
 
-    facts_df.set_index("Category", inplace = True)
     facts_df
 
     # Convert the dataframe into HTML table
     # Resource: https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_html.html
-    facts_html = facts_df.to_html(index = True)
+    facts_html = facts_df.to_html(index = False)
 
     # Add to dictionary
     mars_current_data["fun_facts"] = facts_html

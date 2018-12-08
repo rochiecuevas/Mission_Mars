@@ -13,8 +13,88 @@
 <body>
     <div class = "jumbotron jumbotron-fluid text-center">
         <h1>Martian Adventure</h1>
-        <button class = "btn btn-info" type = "button">Latest Data</button>
-
+        <p><a class = "btn btn-info btn-lg" href = "/scrape">Live: From Mars!</a></p>
     </div>
+
+    <!-- Current Mars Data -->
+    <div class = "container">
+        <div class = "row">
+
+            <!-- Live News -->
+            <div class = "col-md-12">
+                <h2>Latest News</h2>
+                <h3>{{ list.latest_news_title }}</h3>
+                <p>{{ list.latest_news_teaser }}</p>
+            </div>
+        </div>
+        <hr>
+        <!-- Featured Image -->
+        <div class = "row">
+            <div class = "col-md-8">
+                <h2>Featured Mars Image</h2>
+                <img src = "{{ list.featured_image }}" alt = "featured image" width = 100%/>
+                <div class = "caption">{{ list.featured_caption }}</div>
+            </div>
+
+            <div class = "col-md-4">
+                <ul class = "list-unstyled">
+                    <li>
+                        <!-- Current Weather Data -->
+                        <h2>Current Martian Weather</h2>
+                        <p>{{ list.weather }}</p>
+                    </li>
+                    <br>
+                    <li>
+                        <!-- Martian Trivia-->
+                        <h2>Fun Martian Facts</h2>
+                        {{ list.fun_facts | safe}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Martian Hemispheres -->
+    <div class = "container">
+        <hr>
+        <div class = "row">
+            <div class = "col-md-12 text-center">
+                <h2>Martian Hemispheres</h2>
+            </div>
+        </div>
+        <hr>
+
+        <!-- Images -->
+        <div class = "row">
+            <div class = "col-md-6">
+                {% for pic in list.hemisphere_images[0:2] %}
+                <img src = "{{ pic['image_url'] }}" alt = "hemisphere_pic" width = 100% />
+                <div class = "caption"><i>{{ pic['title'] }}</i></div>
+                <br>
+                {% endfor %}
+            </div>
+
+            <div class = "col-md-6">
+                {% for pic in list.hemisphere_images[2:4] %}
+                <img src = "{{ pic['image_url'] }}" alt = "hemisphere_pic" width = 100% />
+                <div class = "caption"><i>{{ pic['title'] }}</i></div>
+                <br>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class = "container">
+        <footer>
+            <p>Post date: <script> document.write(new Date().toLocaleDateString()); </script></p>
+            <p>Sources: 
+                <a href = "https://mars.nasa.gov/news" class = "btn btn-info">NASA Mars Exploration Program</a>
+                <a href = "https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars" class = "btn btn-info">JPL Mars Images</a>
+                <a href = "https://twitter.com/marswxreport?lang=en" class = "btn btn-info">@MarsWxReport</a>
+                <a href = "https://space-facts.com/mars/" class = "btn btn-info">Space Facts</a>
+            </p>
+        </footer>
+    </div>
+    
 </body>
 </html>

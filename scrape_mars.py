@@ -75,7 +75,6 @@ def scrape():
 
     # Find the latest Mars weather report 
     mars_weather = soup_twitter.find("p", class_ = "tweet-text").text
-    mars_weather
 
     # Add to dictionary
     mars_current_data["weather"] = mars_weather
@@ -92,8 +91,6 @@ def scrape():
     # Convert the HTML table to a dataframe
     facts_df = mars_facts[0]
     facts_df.columns = ["Category", "Data"]
-
-    facts_df
 
     # Convert the dataframe into HTML table
     # Resource: https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_html.html
@@ -129,8 +126,6 @@ def scrape():
     comp_links = []        
     for x in partial_links:
         comp_links.append("https://astrogeology.usgs.gov/" + x)
-
-    comp_links
 
     # Get and format the names of the hemispheres
 

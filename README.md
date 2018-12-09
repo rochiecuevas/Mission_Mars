@@ -12,7 +12,7 @@ Thanks to the sensors that are now in place on Mars, it is now possible to colle
 4. [__Valles Marineris__](https://en.wikipedia.org/wiki/Valles_Marineris), a series of canyons which could be a tectonic crack on the planet's surface 
 
 ## Method
-### Web scraping
+### Extracting data by web scraping and data transformation
 Data was obtained by web scraping using [Python](https://python.readthedocs.io/en/stable/contents.html)'s (version 3.6) [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) library and the open-source tool [Splinter](https://splinter.readthedocs.io/en/latest/). [Pandas](https://pandas.pydata.org/pandas-docs/stable/) and [Numpy](https://docs.scipy.org/doc/numpy-1.15.0/) were used to process the data obtained from scraping the websites in Table 1. 
 
 ```python
@@ -42,7 +42,7 @@ The codes were originally written in [mission_to_mars.ipynb](https://github.com/
 jupyter nbconvert --to python mission_to_mars.ipynb
 ```
 
-__Note:__ *Because the python script was used in creating the Flask application, this script is featured below. The Jupyter notebook was used for testing the codes prior to developing the web application.*
+__Note:__ *Because the python script was used in creating the Flask application, this script is featured below. The Jupyter notebook was used for testing the codes prior to developing the web application and is not detailed in the README.*
 
 Before conducting web scraping, the function `init_browser()` was defined, which could start the splinter browser. The open-source tool [chromedriver](http://chromedriver.chromium.org/) needed to be downloaded to make sure that the code below works. The path of the chromedriver also needed to be determined (using the `!which chromedriver` code in the Jupyter notebook). 
 
@@ -84,7 +84,7 @@ Table 3. Traceability from URL variable to Beautiful Soup object for text data.
 |current weather|url_twitter|html_twitter|soup_twitter|
 |Martian hemispheres|url_hemi|html_hemi|soup_hemi|
 
-The __second__ step in scraping was finding the HTML tags that contained the relevant data and isolating the conntent. Because each website has a unique design, finding this step was customised for each soup object. __NB:__ *The codes are indented because they are inside the function `scrape()`*.
+The __second__ step in scraping was finding the HTML tags that contained the relevant data and isolating the content. Because each website has a unique design, this step was customised for each soup object. __NB:__ *The codes are indented because they are inside the function `scrape()`*.
 
 ```python
 # News title and teaser
@@ -128,7 +128,7 @@ The hemisphere images were located in four separate webpages with links in `url_
     desc_hemi = soup_hemi.find_all("div", class_ = "description")
 ```
 
-The webpage URLs were inside the <a></a> children of the <div class = "description"> HTML tag. A for-loop was used to extract the URLs:
+The webpage URLs were inside the `<a></a>` children of the `<div class = "description">` HTML tag. A for-loop was used to extract the URLs:
 
 ```python
 # Create a list of links
@@ -142,7 +142,7 @@ The webpage URLs were inside the <a></a> children of the <div class = "descripti
         comp_links.append("https://astrogeology.usgs.gov/" + x)
 ```
 
-The names of each hemisphere, were put in a list called `titles` and cleaned.
+The name of each hemisphere was put in a list called `titles` and then cleaned.
 
 ```python
 # remove the suffix "_enhanced"
@@ -210,12 +210,112 @@ The __third__ step in this workflow was adding the final outputs of each web scr
     mars_current_data["hemisphere_images"] = hemisphere_images_urls
 ```
 
-Hence, the function `scrape` returned the dictionary.
+Hence, the function `scrape` returned the now populated dictionary.
 
 ```python
     return mars_current_data
 ```
 
+### Building the `index.html` page
+A `templates` folder was created to store the `index.html`. This would allow `app.py` to extract from the MongoDB database directly onto the webpage. The `index.html` used Bootstrap CSS for formatting and layouting. 
+
+A button on the `<div class = "jumbotron">` that acted like a link to `app.py` was added.
+
+```html
+<a class = "btn btn-info btn-lg" href = "/scrape">Live: From Mars!</a>
+```
+
+
+The information from the list `info` was placed into the html page. For example, the latest news was rendered as follows:
+
+```html
+<h3>{{ list.news_title }}</h3> <!-- news title -->
+<p>{{ list.news_teaser }}</p> <!-- news teaser -->
+```
+
+The HTML table of Mars planetary data was rendered onto `index.html` using this code:
+
+```html
+{{ list.fun_facts | safe}} <!-- "|safe }}" allows the HTML table to be rendered directly -->
+```
+
+The URL of the featured image was inserted as a string in the image HTML tag.
+
+```html
+<img src = "{{ list.featured_image }}" alt = "featured image" width = 100%/>
+```
+
+To render each hemisphere image, the list of dictionaries containing the hemisphere URLs (in the BSON document) were subjected to a for loop.
+
+```html
+{% for pic in list.hemisphere_images[2:4] %}
+<img src = "{{ pic['image_url'] }}" alt = "hemisphere_pic" width = 100% />
+<div class = "caption"><i>{{ pic['title'] }}</i></div>
+{% endfor %}
+```
+
+In the code above, `{{ pic['image_url'] }}` referred to the value while `{{ pic['title'] }}` referred to the field for each dictionary in the list.
+
 ### Loading Mars data into MongoDB
+The data stored in `mars_current_data` was loaded into MongoDB using the [Flask](http://flask.pocoo.org/docs/1.0/) app `app.py`. This was initiated by loading Flask, [Flask-PyMongo](https://flask-pymongo.readthedocs.io/en/latest/), and `scrape_mars.py`.
+
+```python
+# Dependencies for database CRUD
+from flask_pymongo import PyMongo # Use flask_pymongo to allow running MongoDB in Python
+import scrape_mars
+
+# Dependencies for rendering the information to HTML
+from flask import Flask, render_template, redirect
+```
+
+The app was initialised and configured for MongoDB.
+
+```python
+# Create an instance for the Flask app
+app = Flask(__name__)
+
+# Connect to a MongoDB database
+app.config["MONGO_URI"] = "mongodb://localhost:27017/mars_app"
+mongo = PyMongo(app)
+```
+
+Two app routes were created. The first one rendered to the `index.html` file while the second one directed to `/scrape`, which then redirected to the `index.html`. The first app route had a function called `index` that extracted the first BSON document in the database and placed it in a list called `info` in the database.
+
+```python
+@app.route('/')
+def index():
+    # Store the collection in a list
+    info = mongo.db.mars_current_data.find_one()
+
+    # Render the template with the information in it
+    return render_template("index.html", list = info)
+```
+
+The second app route defined a function called `scraper` which called the `scrape()` function in `scrape_mars.py`. The `mars_current_dictionary` returned by `scrape()` was loaded as a BSON document into the database. 
+
+```python
+@app.route('/scrape')
+def scraper():
+    info = mongo.db.mars_current_data
+    info_data = scrape_mars.scrape()
+    info.update({}, info_data, upsert = True)
+    return redirect("/", code = 302)
+```
+
+Before running `app.py`, MongoDB was initialised in the command line.
+
+```python
+$ mongod
+```
 
 ## Output
+`app.py` was run in the development environment from the command line.
+
+```python
+$ export FLASK_DEBUG=1
+$ export FLASK_ENV=development
+$ export FLASK_APP=app.py
+$ flask run
+```
+
+Opening the route `http://127.0.0.1:5000/` led automatically to loading `index.html` on the browser. Clicking the `Live: From Mars!` button would rerun `app.py` and show the latest data.

@@ -306,7 +306,7 @@ def scraper():
 
 Before running `app.py`, MongoDB was initialised in the command line.
 
-```python
+```html
 $ mongod
 ```
 

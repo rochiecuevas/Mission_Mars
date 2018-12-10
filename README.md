@@ -53,17 +53,19 @@ def init_browser():
     return Browser('chrome', **executable_path, headless=False)
 ```
 
-Next, the web scraping script `scrape` was defined.
+Next, the web scraping function `scrape` was defined.
 
 ```python
 # Create a function that automates the web scraping
 def scrape():
     browser = init_browser()
+
+    mars_current_data = {}
 ```
 
 An empty dictionary `mars_current_data` was created. This dictionary would contain the outputs of web scraping originating from the URLs in Table 1.
 
-The __first__ step in scraping was creating a Beautiful Soup object, which basically is the website content in a nested data structure. For example, for the latest news from NASA followed Table 2. These steps were conducted also for the other URL variables in Table 1.
+The __first__ step in scraping was creating a Beautiful Soup object, which basically is the website content in a nested data structure. For example, web scraping for the latest news from NASA followed Table 2. These steps were conducted also for the other URL variables in Table 1.
 
 Table 2. Workflow for creating the Beautiful Soup object for latest news stored in `url_NASA`.
 
@@ -91,13 +93,13 @@ The __second__ step in scraping was finding the HTML tags that contained the rel
     news_title = soup_NASA.find("div", class_ = "content_title").text.strip()
     news_teaser = soup_NASA.find("div", class_ = "rollover_description_inner").text.strip()
 
-# Get the URL of the featured image and its caption
+# URL of the featured image and its caption
     image = soup_JPL.find_all("a", class_ = "button fancybox")[0]
     image_url = image.get("data-fancybox-href")
     featured_image_url = "https://www.jpl.nasa.gov" + image_url
     image_caption = image.get("data-description")
 
-# Find the latest Mars weather report 
+# Latest Mars weather report 
     mars_weather = soup_twitter.find("p", class_ = "tweet-text").text
 ```
 
@@ -113,7 +115,7 @@ Getting the planetary data required a different approach because the data was in
     facts_df.columns = ["Category", "Data"]
 ```
 
-The data was then converted to a HTML table.
+The data was then converted to a new HTML table.
 
 ```python
 # Convert the dataframe into HTML table
@@ -121,14 +123,14 @@ The data was then converted to a HTML table.
     facts_html = facts_df.to_html(index = False)
 ```
 
-The hemisphere images were located in four separate webpages with links in `url_hemi`. Hence, the divs for these links were obtained as follows:
+The hemisphere images were located in four separate webpages with links in `url_hemi`. The webpage URLs were inside the `<a></a>` children of the `<div class = "description">` HTML tag. To get to the URLs, the description div classes were isolated:
 
 ```python
 # Retrieve the HTML elements with the link to each page containing
     desc_hemi = soup_hemi.find_all("div", class_ = "description")
 ```
 
-The webpage URLs were inside the `<a></a>` children of the `<div class = "description">` HTML tag. A for-loop was used to extract the URLs:
+ A for-loop was then used to extract the URLs:
 
 ```python
 # Create a list of links
@@ -158,7 +160,7 @@ The name of each hemisphere was put in a list called `titles` and then cleaned.
     titles = [title.title() for title in titles]
 ```
 
-To recap, the name and the URL of the webpage of each hemisphere were appended to the `titles` and `comp_links` lists, respectively. The URL of each hemisphere image was obtained using the function `get_url()` based on the indices of each webpage URL in `comp_links`. This function was nested inside `scrape()`.
+To recap, the name and the URL of the webpage of each hemisphere were appended to the `titles` and the `comp_links` lists, respectively. The URL of each hemisphere image was obtained using the function `get_url()` based on the index of each webpage URL in `comp_links`. This function was nested inside `scrape()`.
 
 ```python
 # Create a list of indices for scraping each hemisphere website using a loop
@@ -217,9 +219,9 @@ Hence, the function `scrape` returned the now populated dictionary.
 ```
 
 ### Building the `index.html` page
-A `templates` folder was created to store the `index.html`. This would allow `app.py` to extract from the MongoDB database directly onto the webpage. The `index.html` used Bootstrap CSS for formatting and layouting. 
+A `templates` folder was created to store the `index.html` file. This would allow `app.py` to extract from the MongoDB database directly and load onto the webpage. The `index.html` used Bootstrap CSS for formatting and layouting. 
 
-A button on the `<div class = "jumbotron">` that acted like a link to `app.py` was added.
+A button on the `<div class = "jumbotron">` that acted like a link to `app.py` was added. Each time this button was clicked, the most updated information about Mars from the NASA mission was placed in `index.html`.
 
 ```html
 <a class = "btn btn-info btn-lg" href = "/scrape">Live: From Mars!</a>
@@ -245,7 +247,7 @@ The URL of the featured image was inserted as a string in the image HTML tag.
 <img src = "{{ list.featured_image }}" alt = "featured image" width = 100%/>
 ```
 
-To render each hemisphere image, the list of dictionaries containing the hemisphere URLs (in the BSON document) were subjected to a for loop.
+To render each hemisphere image, the list of dictionaries containing the hemisphere URLs (in the BSON document created by `app.py`) was subjected to a for loop.
 
 ```html
 {% for pic in list.hemisphere_images[2:4] %}
@@ -311,7 +313,7 @@ $ mongod
 ## Output
 `app.py` was run in the development environment from the command line.
 
-```python
+```html
 $ export FLASK_DEBUG=1
 $ export FLASK_ENV=development
 $ export FLASK_APP=app.py

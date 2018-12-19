@@ -219,7 +219,7 @@ Hence, the function `scrape` returned the now populated dictionary.
 ```
 
 ### Building the `index.html` page
-A `templates` folder was created to store the `index.html` file. This would allow `app.py` to extract from the MongoDB database directly and load onto the webpage. The `index.html` used Bootstrap CSS for formatting and layouting. 
+A `templates` folder was created to store the [`index.html`](https://github.com/rochiecuevas/Mission_Mars/blob/master/templates/index.html) file. This would allow [`app.py`](https://github.com/rochiecuevas/Mission_Mars/blob/master/app.py) to extract from the MongoDB database directly and load onto the webpage. The `index.html` used Bootstrap CSS for formatting and layouting. 
 
 A button on the `<div class = "jumbotron">` that acted like a link to `app.py` was added. Each time this button was clicked, the most updated information about Mars from the NASA mission was placed in `index.html`.
 
@@ -311,7 +311,7 @@ $ mongod
 ```
 
 ## Output
-`app.py` was run in the development environment from the command line.
+[`app.py`](https://github.com/rochiecuevas/Mission_Mars/blob/master/app.py) was run in the development environment from the command line.
 
 ```html
 $ export FLASK_DEBUG=1
